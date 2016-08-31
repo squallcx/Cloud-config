@@ -6,9 +6,9 @@ ssh_authorized_keys:
 coreos:
   etcd2:
     name: etcdserver
-    initial-cluster: etcdserver=http://192.168.37.201:2380
-    initial-advertise-peer-urls: http://192.168.37.201:2380
-    advertise-client-urls: http://192.168.37.201:2379
+    initial-cluster: etcdserver=http://192.168.37.210:2380
+    initial-advertise-peer-urls: http://192.168.37.210:2380
+    advertise-client-urls: http://192.168.37.210:2379
     listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
     listen-peer-urls: http://0.0.0.0:2380
   units:
@@ -20,5 +20,5 @@ coreos:
         [Match]
         Name=eth0
         [Network]
-        Address=192.168.37.201/24
+        Address=192.168.37.210/24
         Gateway=192.168.37.2
