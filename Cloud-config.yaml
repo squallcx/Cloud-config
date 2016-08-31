@@ -2,31 +2,50 @@
 ssh_authorized_keys:
   - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDi6NYver+ju8C2PvS0VPPJBtoPDuLcLSMtHpB+l1rtTdUPFMbMLwU0FzP275rdmqw5t9NOn0faN3ezMSRWljDWLHiwBzd5Nh371U94mMu8MQPyNhA2MggGSgSdnEbfYfejeVdEZhMCuXAvGlQ7bA9exZHTG3pq1CwHhlrraXNqpAWspWnPO0ZWTW9RzwiZa5cXM9I76yb0hBNXxkkLIvVrOoOLG2k7XIMbrd2hHuUP8eIrtKQdLQ2WA0sCWzhwW1kOWgHadcjLFrVZeuV0uM/cslKCnz+/xdwiLuZq/2R9NDGAGHHknPT9uf6QdXs5JSXnCAHlkepyI1HRTOPypvv7 squallcx@localhost
 coreos:
+  update:
+    reboot-strategy: etcd-lock
+  etcd:
+    discovery: https://discovery.etcd.io/6c722406fa71c27a92a64a15b172e582
+    addr: $private_ipv4:4001
+    peer-addr: $private_ipv4:7001
   etcd2:
     discovery: https://discovery.etcd.io/6c722406fa71c27a92a64a15b172e582
-    # multi-region and multi-cloud deployments need to use $public_ipv4
-    advertise-client-urls: http://$private_ipv4:2379,http://$private_ipv4:4001
+    advertise-client-urls: http://$private_ipv4:2379
     initial-advertise-peer-urls: http://$private_ipv4:2380
-    # listen on both the official ports and the legacy ports
-    # legacy ports can be omitted if your application doesn't depend on them
     listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
-    listen-peer-urls: http://$private_ipv4:2380
+    listen-peer-urls: http://$private_ipv4:2380,http://$private_ipv4:7001
+  fleet:
+    public-ip: $private_ipv4
+    metadata: type=web
+  flannel:
+    interface: $private_ipv4
   units:
-    - name: etcd2.service
-      command: start
-    - name: fleet.service
-      command: start
-    - name: docker-tcp.socket
-      command: start
-      enable: true
-      content: |
-        [Unit]
-        Description=Docker Socket for the API
-
-        [Socket]
-        ListenStream=2375
-        BindIPv6Only=both
-        Service=docker.service
-
-        [Install]
-        WantedBy=sockets.target
+  - name: etcd.service
+    command: start
+  - name: fleet.service
+    command: start
+  - name: docker-tcp.socket
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Docker Socket for the API
+      [Socket]
+      ListenStream=2375
+      Service=docker.service
+      BindIPv6Only=both
+      [Install]
+      WantedBy=sockets.target
+write_files:
+- path: /etc/ssh/sshd_config
+  permissions: '0644'
+  owner: root
+  content: |
+    UsePrivilegeSeparation sandbox
+    Subsystem sftp internal-sftp
+    ClientAliveInterval 180
+    UseDNS no
+    PermitRootLogin no
+    AllowUsers core 
+    PasswordAuthentication no
+    ChallengeResponseAuthentication no
