@@ -1,4 +1,6 @@
 #cloud-config
+
+---
 coreos:
   etcd2:
     name: etcdserver
